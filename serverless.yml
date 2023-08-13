@@ -1,0 +1,25 @@
+app: serverless-guru-application
+
+service: serverless-guru-application
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'dev'}
+  stackName: ${self:service}-${self:provider.stage}
+  apiName: ${self:service}-${self:provider.stage}
+  region: ${env:AWS_REGION, 'us-west-1'}
+  memorySize: 128
+  timeout: 30
+  environment:
+    LOG_LEVEL: debug
+
+functions:
+  trigger:
+    handler: lambdas/index.handler
+    events:
+      - http:
+          path: hello
+          method: get
