@@ -1,0 +1,71 @@
+name: production-deployment
+
+on: 
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    name: deploy-dev
+    environment: dev
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: serverless deploy
+      uses: serverless/github-action@master
+      with:
+        args: deploy --stage dev
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  deploy-test:
+    name: deploy-test
+    environment: test
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: serverless deploy
+      uses: serverless/github-action@master
+      with:
+        args: deploy --stage test
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  deploy-prod:
+    name: deploy-prod
+    environment: prod
+    needs: [deploy-dev, deploy-test]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: serverless deploy
+      uses: serverless/github-action@master
+      with:
+        args: deploy --stage prod
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
